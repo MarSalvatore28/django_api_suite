@@ -31,6 +31,16 @@ data_list.append({
     'is_active': False
 })
 
+def find_item(item_id):
+    """
+    Busca un item por ID en data_list.
+    Retorna (item, index) si lo encuentra, o (None, None) si no existe.
+    """
+    for index, item in enumerate(data_list):
+        if item["id"] == item_id:
+            return item, index
+    return None, None
+
 class DemoRestApi(APIView):
     name = "Demo REST API"
 
