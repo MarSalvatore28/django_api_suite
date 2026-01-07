@@ -65,3 +65,57 @@ class DemoRestApi(APIView):
             {'message': 'Dato guardado exitosamente.', 'data': data},
             status=status.HTTP_201_CREATED
         )
+
+class DemoRestApiItem(APIView):
+
+    def get(self, request, item_id):
+        for item in data_list:
+            if item['id'] == item_id:
+                return Response(item, status=status.HTTP_200_OK)
+
+        return Response(
+            {'error': 'Elemento no encontrado.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    def put(self, request, item_id):
+        data = request.data
+
+        if 'id' not in data:
+            return Response(
+                {'error': 'El campo id es obligatorio.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if data['id'] != item_id:
+            return Response(
+                {'error': 'El id del cuerpo no coincide con el id de la URL.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        for item in data_list:
+            if item['id'] == item_id:
+
+                if 'name' not in data or 'email' not in data or 'is_active' not in data:
+                    return Response(
+                        {'error': 'Faltan campos requeridos: name, email, is_active.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                item['name'] = data['name']
+                item['email'] = data['email']
+                item['is_active'] = data['is_active']
+
+                return Response(
+                    {
+                        'message': 'Elemento actualizado completamente (PUT).',
+                        'data': item
+                    },
+                    status=status.HTTP_200_OK
+                )
+
+        return Response(
+            {'error': 'Elemento no encontrado.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+        
