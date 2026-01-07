@@ -67,55 +67,103 @@ class DemoRestApi(APIView):
         )
 
 class DemoRestApiItem(APIView):
+    name = "Demo REST API Item"
 
     def get(self, request, item_id):
         for item in data_list:
-            if item['id'] == item_id:
+            if item["id"] == item_id:
                 return Response(item, status=status.HTTP_200_OK)
 
         return Response(
-            {'error': 'Elemento no encontrado.'},
+            {"error": "Elemento no encontrado."},
             status=status.HTTP_404_NOT_FOUND
         )
 
     def put(self, request, item_id):
         data = request.data
 
-        if 'id' not in data:
+        if "id" not in data:
             return Response(
-                {'error': 'El campo id es obligatorio.'},
+                {"error": "El campo id es obligatorio."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if data['id'] != item_id:
+        if data["id"] != item_id:
             return Response(
-                {'error': 'El id del cuerpo no coincide con el id de la URL.'},
+                {"error": "El id del cuerpo no coincide con el id de la URL."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         for item in data_list:
-            if item['id'] == item_id:
+            if item["id"] == item_id:
 
-                if 'name' not in data or 'email' not in data or 'is_active' not in data:
+                required = {"name", "email", "is_active"}
+                if not required.issubset(data.keys()):
                     return Response(
-                        {'error': 'Faltan campos requeridos: name, email, is_active.'},
+                        {"error": "Faltan campos requeridos: name, email, is_active."},
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-                item['name'] = data['name']
-                item['email'] = data['email']
-                item['is_active'] = data['is_active']
+                item["name"] = data["name"]
+                item["email"] = data["email"]
+                item["is_active"] = data["is_active"]
 
                 return Response(
-                    {
-                        'message': 'Elemento actualizado completamente (PUT).',
-                        'data': item
-                    },
+                    {"message": "Elemento actualizado completamente (PUT).", "data": item},
                     status=status.HTTP_200_OK
                 )
 
         return Response(
-            {'error': 'Elemento no encontrado.'},
+            {"error": "Elemento no encontrado."},
             status=status.HTTP_404_NOT_FOUND
         )
-        
+
+    def patch(self, request, item_id):
+        item, index = find_item(item_id)
+        if item is None:
+            return Response(
+                {"error": f"Item con id '{item_id}' no existe."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        allowed_fields = {"name", "email", "is_active"}
+        invalid_fields = [k for k in request.data if k not in allowed_fields]
+
+        if invalid_fields:
+            return Response(
+                {"error": f"Campos inválidos: {invalid_fields}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        for key in allowed_fields:
+            if key in request.data:
+                item[key] = request.data[key]
+
+        data_list[index] = item
+
+        return Response(
+            {"message": "Actualización parcial exitosa (PATCH).", "data": item},
+            status=status.HTTP_200_OK
+        )
+
+    def delete(self, request, item_id):
+        item, index = find_item(item_id)
+        if item is None:
+            return Response(
+                {"error": f"Item con id '{item_id}' no existe."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if item.get("is_active") is False:
+            return Response(
+                {"message": "Ya estaba desactivado.", "data": item},
+                status=status.HTTP_200_OK
+            )
+
+        item["is_active"] = False
+        data_list[index] = item
+
+        return Response(
+            {"message": "Eliminación lógica exitosa.", "data": item},
+            status=status.HTTP_200_OK
+        )
